@@ -27,6 +27,12 @@ vis.events.subscribe(vis.events.FILE_SAVE_PRE, function(file)
       sudo chown "$(whoami)" "$file" >/dev/null
     ]])
     state[file.path].owner = out:gsub('\n$', '')
+    if status > 0 then
+      if err then
+        vis:message('Could not change owner for writing:\n\n' .. err)
+      end
+      error()
+    end
   end
 end)
 
@@ -37,5 +43,13 @@ vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file)
       owner=']] .. state[file.path].owner:gsub("'", "'\\''") .. [['
       sudo chown "$owner" "$file"
    ]])
+    if status > 0 then
+      vis:message(
+        'Could not change owner back to '
+          .. state[file.path].owner
+          .. (err and (':\n\n' .. err .. '\n') or '. ')
+          .. 'You will need to fix this manually.'
+      )
+    end
   end
 end)
