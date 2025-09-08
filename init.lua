@@ -93,17 +93,24 @@ end)
 vis.events.subscribe(vis.events.FILE_SAVE_PRE, function(file)
   if state[file.path] and not state[file.path].writable then
     local status, out, err = vis:pipe(file, { start = 0, finish = 0 }, [[
-      file=']] .. file.path:gsub("'", "'\\''") .. [['
-      ls -l "$file" | cut -d' ' -f4 || exit 1
-      sudo chown "$(whoami)" "$file" >/dev/null
-    ]])
-    state[file.path].owner = out:gsub('\n$', '')
+     file=']] .. file.path:gsub("'", "'\\''") .. [['
+     owner="$(
+       { ls -l "$file" || ls -l "$(dirname "$file")" || exit 1; } \
+         2>/dev/null | cut -d' ' -f4
+     )"
+     sudo env whoami="$(whoami)" owner="$owner" file="$file" sh -c '
+       ! [ -e "$file" ] || touch "$file"
+       chown "$whoami" "$file" >/dev/null
+     '
+     printf "%s" "$owner"
+   ]])
     if status > 0 then
       if err then
         vis:message('Could not change owner for writing:\n\n' .. err)
       end
       error()
     end
+    state[file.path].owner = out:gsub('\n$', '')
   end
 end)
 
