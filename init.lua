@@ -14,7 +14,7 @@ end
 
 vis.events.subscribe(vis.events.INIT, function()
   local argv = run([[
-    set -- $(ps -o ppid= $$)
+    set -- "$(ps -o pid=,ppid= | awk -vpid=$$ '$1 == pid { print $2 }')"
     case "$(uname -s)" in
       Linux)
         cat "/proc/$1/cmdline"
