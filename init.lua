@@ -96,7 +96,7 @@ vis.events.subscribe(vis.events.FILE_SAVE_PRE, function(file)
      file=']] .. file.path:gsub("'", "'\\''") .. [['
      owner="$(
        { ls -l "$file" || ls -l "$(dirname "$file")" || exit 1; } \
-         2>/dev/null | cut -d' ' -f4
+         2>/dev/null | awk '{ print $3 }'
      )"
      sudo env whoami="$(whoami)" owner="$owner" file="$file" sh -c '
        ! [ -e "$file" ] || touch "$file"
