@@ -99,7 +99,7 @@ vis.events.subscribe(vis.events.FILE_SAVE_PRE, function(file)
          2>/dev/null | awk '{ print $3 }'
      )"
      sudo env whoami="$(whoami)" owner="$owner" file="$file" sh -c '
-       ! [ -e "$file" ] || touch "$file"
+       [ -e "$file" ] || touch "$file"
        chown "$whoami" "$file" >/dev/null
      '
      printf "%s" "$owner"
