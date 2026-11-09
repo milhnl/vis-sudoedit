@@ -99,16 +99,17 @@ vis.events.subscribe(vis.events.FILE_SAVE_PRE, function(file)
          2>/dev/null | awk '{ print $3 }'
      )"
      sudo env whoami="$(whoami)" owner="$owner" file="$file" sh -c '
-       [ -e "$file" ] || touch "$file"
+       [ -e "$file" ] || touch "$file" || exit
        chown "$whoami" "$file" >/dev/null
-     '
+     ' || exit
      printf "%s" "$owner"
    ]])
-    if status > 0 then
-      if err then
-        vis:message('Could not change owner for writing:\n\n' .. err)
-      end
-      error()
+    if status ~= 0 then
+      vis:message(
+        'Could not change owner for writing.'
+          .. (err and ('\n\n' .. err) or '')
+      )
+      return false
     end
     state[file.path].owner = out:gsub('\n$', '')
   end
@@ -121,7 +122,7 @@ vis.events.subscribe(vis.events.FILE_SAVE_POST, function(file)
       owner=']] .. state[file.path].owner:gsub("'", "'\\''") .. [['
       sudo chown "$owner" "$file"
    ]])
-    if status > 0 then
+    if status ~= 0 then
       vis:message(
         'Could not change owner back to '
           .. state[file.path].owner
